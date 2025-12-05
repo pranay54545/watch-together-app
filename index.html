@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WatchTogether - Ultimate</title>
+    <title>WatchTogether - Ultimate v2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
@@ -28,7 +28,7 @@
 
         /* Glass UI */
         .glass {
-            background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px rgba(0,0,0,0.3);
             transition: opacity 0.5s ease, transform 0.5s ease;
         }
@@ -41,8 +41,15 @@
         #camGrid {
             cursor: grab;
             touch-action: none;
-            position: absolute; /* Essential for dragging */
-            z-index: 50;
+            position: absolute; 
+            z-index: 60; /* Higher than controls */
+            display: flex;
+            gap: 12px;
+            padding: 8px;
+            border-radius: 16px;
+            flex-wrap: nowrap; /* Prevent stacking overlap */
+            max-width: 90vw;
+            overflow-x: auto;
         }
         #camGrid:active { cursor: grabbing; }
 
@@ -52,10 +59,10 @@
             pointer-events: none;
         }
         body.cinema-mode .animated-bg, body.cinema-mode .blob {
-            opacity: 0.1; /* Dim background */
+            opacity: 0.1; 
         }
         body.cinema-mode #camGrid {
-            opacity: 0.4; /* Dim cams slightly when idle */
+            opacity: 0.3; 
             transition: opacity 0.5s;
         }
         body.cinema-mode #camGrid:hover { opacity: 1; }
@@ -66,7 +73,7 @@
         
         .gate-door {
             position: absolute; top: 0; bottom: 0; width: 50%; background: #0f172a;
-            transition: transform 1.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); /* Bouncy open */
+            transition: transform 1.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
             display: flex; align-items: center; overflow: visible; z-index: 101;
         }
         .gate-left { left: 0; justify-content: flex-end; transform: translateX(-100%); border-right: 2px solid rgba(255,255,255,0.1); }
@@ -77,10 +84,6 @@
         #gateOverlay.opening .gate-left { transform: translateX(-120%); }
         #gateOverlay.opening .gate-right { transform: translateX(120%); }
 
-        /* TRUE PIXEL ART CSS */
-        .pixel-art { width: 150px; height: 300px; position: relative; }
-        .pixel { position: absolute; width: 10px; height: 10px; box-shadow: 0 0 5px rgba(0,0,0,0.2); }
-        
         /* Shake Animation */
         .shake-it { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
         @keyframes shake {
@@ -99,6 +102,10 @@
         .theme-love .blob-2 { background: #f43f5e; }
         .theme-love .accent-text { color: #f472b6; }
         .theme-love .accent-bg { background-color: #db2777; }
+
+        /* Source Icons */
+        .source-icon { filter: grayscale(1); opacity: 0.6; transition: all 0.2s; }
+        .source-icon.active { filter: grayscale(0); opacity: 1; transform: scale(1.1); }
     </style>
 </head>
 <body>
@@ -157,9 +164,9 @@
 
     <!-- MAIN APP -->
     <div id="app" class="hidden fixed inset-0 flex flex-col">
-        <!-- Header (UI Element) -->
-        <div id="appHeader" class="absolute top-0 left-0 w-full p-4 z-40 pointer-events-none ui-element transition-opacity duration-500">
-            <div class="glass max-w-4xl mx-auto h-16 rounded-full flex items-center justify-between px-6 pointer-events-auto shadow-2xl">
+        <!-- Header (UI Element) - Z-Index 50 to stay on top -->
+        <div id="appHeader" class="absolute top-0 left-0 w-full p-4 z-50 pointer-events-none ui-element transition-opacity duration-500">
+            <div class="glass max-w-4xl mx-auto h-16 rounded-full flex items-center justify-between px-6 pointer-events-auto shadow-2xl backdrop-blur-xl">
                 <div class="flex items-center gap-4">
                     <span class="font-black text-xl tracking-tight hidden sm:inline">Watch<span class="text-blue-400 accent-text">Together</span></span>
                     <button onclick="copyID()" class="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-full text-xs font-bold border border-white/10 transition-all">
@@ -167,7 +174,7 @@
                     </button>
                 </div>
                 <div class="flex items-center gap-3">
-                    <button onclick="shareScreen()" class="w-10 h-10 rounded-full bg-white/5 hover:bg-white/20 flex items-center justify-center transition-all" title="Share Screen"><i class="fas fa-desktop"></i></button>
+                    <button onclick="shareScreen()" class="w-10 h-10 rounded-full bg-white/5 hover:bg-white/20 flex items-center justify-center transition-all text-white hover:text-blue-400" title="Share Screen"><i class="fas fa-desktop"></i></button>
                     <button onclick="leave()" class="bg-red-500/80 hover:bg-red-500 text-white px-5 py-2 rounded-full text-xs font-black shadow-lg">EXIT</button>
                 </div>
             </div>
@@ -178,34 +185,44 @@
             <!-- Video Area (Full Screen) -->
             <div class="flex-1 bg-black relative overflow-hidden group">
                 
-                <!-- YouTube Overlay Input (Hover Zone Fixed) -->
-                <!-- Use a Trigger Zone at the top (h-32) so controls only appear when intentionally hovering near top -->
-                <div id="ytControls" class="absolute top-0 left-0 w-full h-32 z-30 flex justify-center items-end pb-4 transition-all duration-300 opacity-0 hover:opacity-100 focus-within:opacity-100 ui-element">
-                    <div class="glass p-2 rounded-full flex gap-2 shadow-2xl scale-95 hover:scale-100 transition-transform w-96 max-w-[90%]">
-                        <input id="ytUrl" type="text" placeholder="Paste YouTube Link..." class="flex-1 bg-transparent border-none text-sm font-bold px-4 outline-none text-white">
-                        <button onclick="loadYT()" class="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-500 flex items-center justify-center shadow-lg accent-bg"><i class="fas fa-play text-xs"></i></button>
-                    </div>
-                </div>
-
                 <!-- Players -->
                 <div id="ytPlayer" class="w-full h-full pointer-events-auto"></div>
+                <!-- Generic Iframe for other apps (Instagram/Snapchat if compatible) -->
+                <iframe id="genericPlayer" class="hidden w-full h-full border-0 pointer-events-auto" allow="autoplay; encrypted-media"></iframe>
                 <video id="screenVideo" class="hidden w-full h-full object-contain bg-black" autoplay playsinline></video>
                 
                 <!-- Placeholder -->
-                <div id="placeholder" class="absolute inset-0 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm z-10 pointer-events-none ui-element">
-                    <div class="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-4 border-2 border-white/10 animate-pulse">
-                        <i class="fas fa-film text-4xl text-white/20"></i>
+                <div id="placeholder" class="absolute inset-0 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm z-10 pointer-events-none ui-element transition-opacity duration-500">
+                    <div class="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center mb-6 border-2 border-white/10 animate-pulse">
+                        <i class="fas fa-film text-5xl text-white/20"></i>
                     </div>
-                    <h2 class="text-xl font-bold text-white/50">Waiting for video...</h2>
+                    <h2 class="text-2xl font-bold text-white/50">Ready to Watch?</h2>
+                    <p class="text-white/30 text-sm mt-2">Paste a link below to start</p>
                 </div>
 
-                <!-- WebRTC Overlay (Draggable & Auto-Hiding) -->
-                <div id="camGrid" class="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3 p-2 z-50 max-w-full overflow-x-auto no-scrollbar pointer-events-auto glass rounded-2xl shadow-2xl cursor-grab active:cursor-grabbing">
+                <!-- CONTROLS TRAY (Moved to Bottom to avoid Header Overlap) -->
+                <div id="ytControls" class="absolute bottom-32 left-0 w-full z-40 flex flex-col items-center justify-end pb-4 transition-all duration-300 opacity-0 hover:opacity-100 focus-within:opacity-100 ui-element">
+                    <!-- App Selectors -->
+                    <div class="flex gap-4 mb-3 p-2 bg-black/40 backdrop-blur rounded-full border border-white/5 shadow-xl">
+                        <button onclick="setSource('yt')" class="source-icon active text-red-500 text-xl" title="YouTube"><i class="fab fa-youtube"></i></button>
+                        <button onclick="setSource('ig')" class="source-icon text-pink-500 text-xl" title="Instagram"><i class="fab fa-instagram"></i></button>
+                        <button onclick="setSource('snap')" class="source-icon text-yellow-400 text-xl" title="Snapchat"><i class="fab fa-snapchat-ghost"></i></button>
+                    </div>
+
+                    <div class="glass p-2 rounded-full flex gap-2 shadow-2xl scale-95 hover:scale-100 transition-transform w-[500px] max-w-[90%]">
+                        <input id="ytUrl" type="text" placeholder="Paste YouTube Link..." class="flex-1 bg-transparent border-none text-sm font-bold px-4 outline-none text-white placeholder-white/30">
+                        <button onclick="loadMedia()" class="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-500 flex items-center justify-center shadow-lg accent-bg"><i class="fas fa-play text-xs"></i></button>
+                    </div>
+                </div>
+
+                <!-- WebRTC Overlay (Fixed Position, Draggable) -->
+                <!-- Added safe padding and max-width to prevent overlap -->
+                <div id="camGrid" class="absolute bottom-6 left-1/2 -translate-x-1/2 bg-black/20 backdrop-blur-md rounded-2xl border border-white/5 shadow-2xl transition-all">
                     <!-- Me -->
-                    <div class="relative w-32 aspect-video bg-gray-900 rounded-xl overflow-hidden shadow-2xl border border-white/20 ring-1 ring-black/50 hover:scale-105 transition-transform">
+                    <div class="relative w-32 aspect-video bg-gray-900 rounded-xl overflow-hidden shadow-2xl border border-white/20 ring-1 ring-black/50 hover:scale-105 transition-transform flex-shrink-0">
                         <video id="myVideo" class="w-full h-full object-cover transform -scale-x-100" autoplay muted playsinline></video>
                         <div class="absolute bottom-1 left-1 text-[8px] font-black bg-blue-600 px-1.5 py-0.5 rounded text-white accent-bg">YOU</div>
-                        <div class="absolute top-1 right-1 flex gap-1">
+                        <div class="absolute top-1 right-1 flex gap-1 z-10">
                             <button onclick="toggleAudio()" id="btnAudio" class="w-5 h-5 rounded bg-black/50 hover:bg-white text-white hover:text-black flex items-center justify-center text-[10px] transition-colors"><i class="fas fa-microphone"></i></button>
                             <button onclick="toggleVideo()" id="btnVideo" class="w-5 h-5 rounded bg-black/50 hover:bg-white text-white hover:text-black flex items-center justify-center text-[10px] transition-colors"><i class="fas fa-video"></i></button>
                         </div>
@@ -215,7 +232,7 @@
             </div>
 
             <!-- Chat (UI Element) -->
-            <div id="chatBoxContainer" class="absolute right-4 bottom-24 w-80 h-96 glass rounded-3xl flex flex-col hidden md:flex border border-white/10 shadow-2xl z-40 transition-opacity duration-500 ui-element">
+            <div id="chatBoxContainer" class="absolute right-4 bottom-36 w-80 h-80 glass rounded-3xl flex flex-col hidden md:flex border border-white/10 shadow-2xl z-40 transition-opacity duration-500 ui-element">
                 <div class="p-4 border-b border-white/5 flex justify-between items-center">
                     <span class="font-bold text-xs tracking-wider text-white/70">LIVE CHAT</span>
                     <span id="userCount" class="bg-green-500/20 text-green-400 text-[10px] px-2 py-1 rounded-full font-bold">1 Online</span>
@@ -236,7 +253,7 @@
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 
         // ==========================================
-        // 🚨 CONFIG (Use yours from before)
+        // 🚨 CONFIGURATION
         // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyDGgBZL5GkdDG9Hhb66HGNRTUfOjtt2xR0",
@@ -252,11 +269,18 @@
         let mode = 'friends', myStream, screenStream;
         let peers = {};
         let ytPlayer, ytReady = false, amISyncing = false, playState = 'paused';
+        let currentSource = 'yt';
         const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
         // --- INIT ---
         async function boot() {
-            if (!firebaseConfig.apiKey) return document.getElementById('configErr').classList.remove('hidden');
+            // Check if user provided API Key in the config above or if it's still empty
+            if (!firebaseConfig.apiKey) {
+                // Try to use a default or show error
+                // For this code block, we assume user pastes it. 
+                // Showing error if empty:
+                // document.getElementById('configErr').classList.remove('hidden');
+            }
             try {
                 app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
@@ -266,26 +290,31 @@
                 document.getElementById('status').innerText = "Connected & Ready";
                 document.getElementById('status').classList.add('text-green-400');
             } catch(e) {
-                alert("Firebase Error: " + e.message);
+                console.error(e);
+                // Don't alert aggressively
+                document.getElementById('status').innerText = "Config Required (See code)";
+                document.getElementById('configErr').classList.remove('hidden');
             }
         }
 
-        // --- DRAGGABLE WEBCAMS ---
+        // --- DRAGGABLE WEBCAMS (Fixed Logic) ---
         const grid = document.getElementById('camGrid');
         let isDragging = false, startX, startY, initialLeft, initialTop;
 
         grid.addEventListener('mousedown', (e) => {
-            if(e.target.tagName === 'BUTTON' || e.target.tagName === 'I') return;
+            if(e.target.tagName === 'BUTTON' || e.target.tagName === 'I' || e.target.tagName === 'VIDEO') return;
             isDragging = true;
             startX = e.clientX; startY = e.clientY;
+            
+            // Switch to absolute coordinates if centered
             const rect = grid.getBoundingClientRect();
-            // Convert to absolute positioning if centered via CSS
             if (window.getComputedStyle(grid).transform !== 'none') {
+                grid.style.transform = 'none';
                 grid.style.left = rect.left + 'px';
                 grid.style.top = rect.top + 'px';
                 grid.style.bottom = 'auto'; 
-                grid.style.transform = 'none';
             }
+            
             initialLeft = grid.offsetLeft; initialTop = grid.offsetTop;
             grid.style.cursor = 'grabbing';
         });
@@ -301,68 +330,44 @@
 
         window.addEventListener('mouseup', () => { isDragging = false; grid.style.cursor = 'grab'; });
 
-        // --- AUTO HIDE (CINEMA MODE) ---
+        // --- AUTO HIDE ---
         let idleTimer;
         function resetIdleTimer() {
             document.body.classList.remove('cinema-mode');
             clearTimeout(idleTimer);
+            // Only hide if playing and mouse hasn't moved for 3s
             if (playState === 'playing') {
                 idleTimer = setTimeout(() => {
                     document.body.classList.add('cinema-mode');
-                }, 3000); // 3 seconds idle
+                }, 3000);
             }
         }
         window.addEventListener('mousemove', resetIdleTimer);
         window.addEventListener('click', resetIdleTimer);
         window.addEventListener('keydown', resetIdleTimer);
 
-        // --- GATE ANIMATION GENERATOR ---
-        function generatePixelArt(color) {
-            // 15x15 Grid for half-heart (simplified)
-            let pixels = [];
-            for(let i=0; i<300; i++) { // Random scattering for demo, but better to use fixed pattern
-                // Just creating a solid block for the gate look
-                pixels.push(`<div class="pixel" style="background:${color}; top:${Math.random()*200}px; left:${Math.random()*150}px"></div>`);
-            }
-            // Better: Return solid color blocks for cleaner "Gate" look as requested
-            // Using inline SVG in JS for the specific pixel shapes
-            return `<div style="width:100%; height:100%; background:${color}; box-shadow: inset 0 0 50px rgba(0,0,0,0.5);"></div>`;
+        // --- UI HELPERS ---
+        window.setSource = (src) => {
+            currentSource = src;
+            document.querySelectorAll('.source-icon').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            
+            const input = document.getElementById('ytUrl');
+            if(src === 'yt') input.placeholder = "Paste YouTube Link...";
+            else if(src === 'ig') input.placeholder = "Paste Instagram Post URL...";
+            else if(src === 'snap') input.placeholder = "Paste Snapchat URL...";
         }
 
         function createPixelHeartParts() {
-            // True Pixel Art Heart (16x14 grid typically)
-            // Left Half
-            const color = mode === 'love' ? '#ec4899' : '#60a5fa'; // Pink or Blue
-            
-            // We construct grid based divs
-            const s = 10; // pixel size
+            const color = mode === 'love' ? '#ec4899' : '#60a5fa'; 
+            const s = 10;
             let leftHTML = '', rightHTML = '';
-            
-            const heartMap = [
-                "0011000",
-                "0111100",
-                "1111110",
-                "1111111",
-                "1111111",
-                "0111111",
-                "0011111",
-                "0001111",
-                "0000111",
-                "0000011"
-            ];
+            const heartMap = ["0011000","0111100","1111110","1111111","1111111","0111111","0011111","0001111","0000111","0000011"];
 
             heartMap.forEach((row, r) => {
-                // Left side
-                for(let c=0; c<7; c++) {
-                    if(row[c] === '1') leftHTML += `<div style="position:absolute; width:${s}px; height:${s}px; background:${color}; top:${r*s}px; left:${c*s}px; box-shadow: 2px 2px 0 rgba(0,0,0,0.2);"></div>`;
-                }
-                // Right side (Mirror)
-                for(let c=0; c<7; c++) {
-                    if(row[6-c] === '1') rightHTML += `<div style="position:absolute; width:${s}px; height:${s}px; background:${color}; top:${r*s}px; left:${c*s}px; box-shadow: 2px 2px 0 rgba(0,0,0,0.2);"></div>`;
-                }
+                for(let c=0; c<7; c++) if(row[c] === '1') leftHTML += `<div style="position:absolute; width:${s}px; height:${s}px; background:${color}; top:${r*s}px; left:${c*s}px; box-shadow: 2px 2px 0 rgba(0,0,0,0.2);"></div>`;
+                for(let c=0; c<7; c++) if(row[6-c] === '1') rightHTML += `<div style="position:absolute; width:${s}px; height:${s}px; background:${color}; top:${r*s}px; left:${c*s}px; box-shadow: 2px 2px 0 rgba(0,0,0,0.2);"></div>`;
             });
-
-            // Center adjustments
             document.getElementById('gateIconLeft').innerHTML = `<div style="position:relative; width:70px; height:100px; transform: scale(4); transform-origin: top right;">${leftHTML}</div>`;
             document.getElementById('gateIconRight').innerHTML = `<div style="position:relative; width:70px; height:100px; transform: scale(4); transform-origin: top left;">${rightHTML}</div>`;
         }
@@ -383,10 +388,10 @@
                     created: serverTimestamp(),
                     mode: mode,
                     host: user.uid,
-                    state: { url: '', status: 'paused', time: 0, sharer: null }
+                    state: { url: '', status: 'paused', time: 0, sharer: null, type: 'yt' }
                 });
                 join(id);
-            } catch(e) { alert("Check Firestore Rules: " + e.message); }
+            } catch(e) { alert("Error: " + e.message); }
         }
 
         window.joinRoom = async () => {
@@ -395,33 +400,22 @@
             const snap = await getDoc(doc(db, "rooms", id));
             if(!snap.exists()) return alert("Room not found");
             const rData = snap.data();
-            if(rData.mode === 'love') {
-                mode = 'love';
-                document.body.classList.add('theme-love');
-            } else {
-                mode = 'friends';
-                document.body.classList.remove('theme-love');
-            }
+            mode = rData.mode || 'friends';
+            if(mode === 'love') document.body.classList.add('theme-love');
             join(id);
         }
 
         async function join(id) {
-            // 1. Setup Gate
             createPixelHeartParts();
             const overlay = document.getElementById('gateOverlay');
             const leftI = document.getElementById('gateIconLeft');
             const rightI = document.getElementById('gateIconRight');
             
-            // 2. Close Gate (Instant -> Visible)
             overlay.classList.add('active');
-            
-            // 3. Shake Phase
-            await new Promise(r => setTimeout(r, 800)); // Wait for gate close
+            await new Promise(r => setTimeout(r, 800));
             leftI.classList.add('shake-it');
             rightI.classList.add('shake-it');
-            
-            // 4. Open Gate & Switch UI
-            await new Promise(r => setTimeout(r, 600)); // Wait for shake
+            await new Promise(r => setTimeout(r, 600));
             
             room = id;
             document.getElementById('lobby').classList.add('hidden');
@@ -429,35 +423,34 @@
             document.getElementById('displayID').innerText = `ID: ${id}`;
             
             overlay.classList.add('opening');
-            
-            // 5. Cleanup Animation
             setTimeout(() => {
                 overlay.classList.remove('active', 'opening');
                 leftI.classList.remove('shake-it');
                 rightI.classList.remove('shake-it');
-                // Start Particles if Love mode
                 if(mode === 'love') setInterval(spawnHeart, 1500);
             }, 1500);
 
-            // Connect Media
             try {
                 myStream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
                 document.getElementById('myVideo').srcObject = myStream;
+                document.getElementById('myVideo').muted = true; // Always mute self
             } catch(e) { console.warn("No Camera"); }
 
-            // DB Join
             const nick = document.getElementById('username').value || "Guest";
             await setDoc(doc(db, "rooms", room, "users", user.uid), { name: nick, active: true });
-            window.onbeforeunload = () => deleteDoc(doc(db, "rooms", room, "users", user.uid));
+            window.addEventListener('beforeunload', () => deleteDoc(doc(db, "rooms", room, "users", user.uid)));
             listen();
         }
 
-        // --- CORE SYNC ---
+        // --- SYNC & LOGIC ---
         function listen() {
             onSnapshot(collection(db, "rooms", room, "users"), snap => {
                 document.getElementById('userCount').innerText = `${snap.size} Online`;
                 snap.docChanges().forEach(c => {
-                    if(c.doc.id !== user.uid && c.type === 'added' && !peers[c.doc.id]) connect(c.doc.id, true);
+                    // Connect if new user added AND we haven't connected yet
+                    if(c.type === 'added' && c.doc.id !== user.uid && !peers[c.doc.id]) {
+                        connect(c.doc.id, true); // Initiate connection
+                    }
                 });
             });
 
@@ -489,21 +482,43 @@
         function syncState(s) {
             const scr = document.getElementById('screenVideo');
             const yt = document.getElementById('ytPlayer');
+            const gen = document.getElementById('genericPlayer');
+            const ph = document.getElementById('placeholder');
             
+            // Screen Share Priority
             if(s.sharer) {
                 yt.classList.add('hidden-important');
+                gen.classList.add('hidden-important');
+                ph.classList.add('hidden-important');
                 scr.classList.remove('hidden');
+                
+                // If I am not sharing, find the sharer's stream
                 if(s.sharer !== user.uid) {
                     const el = document.getElementById(`v-${s.sharer}`);
-                    if(el) scr.srcObject = el.srcObject;
+                    // If element exists and srcObject is different
+                    if(el && el.srcObject && scr.srcObject !== el.srcObject) {
+                        scr.srcObject = el.srcObject;
+                        scr.play().catch(e=>console.log("Autoplay blocked", e));
+                    }
+                } else {
+                    // If I am sharing, show my screen stream (so I know what I'm sharing)
+                    if(screenStream) scr.srcObject = screenStream;
                 }
-                playState = 'playing'; // Treat screen share as playing
+                playState = 'playing';
+                resetIdleTimer();
+                return;
             } else {
                 scr.classList.add('hidden');
+                scr.srcObject = null; // Unbind
+            }
+
+            // Type handling
+            if (s.type === 'yt') {
+                gen.classList.add('hidden-important');
                 yt.classList.remove('hidden-important');
                 
                 if(ytReady && s.url) {
-                    document.getElementById('placeholder').classList.add('hidden-important');
+                    ph.classList.add('hidden-important');
                     if(ytPlayer.getVideoData()['video_id'] !== s.url) ytPlayer.loadVideoById(s.url);
                     
                     const diff = Math.abs(ytPlayer.getCurrentTime() - s.time);
@@ -511,36 +526,56 @@
                     
                     if(s.status === 'playing') {
                         if(ytPlayer.getPlayerState() !== 1) ytPlayer.playVideo();
-                        if(diff > 2) ytPlayer.seekTo(s.time, true);
+                        if(diff > 1) ytPlayer.seekTo(s.time, true); // Tightened to 1s
                     } else {
                         if(ytPlayer.getPlayerState() !== 2) ytPlayer.pauseVideo();
                     }
                 }
+            } else {
+                // Generic (IG/Snap/Other)
+                yt.classList.add('hidden-important');
+                gen.classList.remove('hidden-important');
+                ph.classList.add('hidden-important');
+                if(gen.src !== s.url) gen.src = s.url;
             }
-            resetIdleTimer(); // Update UI state based on play status
+            resetIdleTimer();
         }
 
-        // --- WEBRTC ---
+        // --- WEBRTC (Fixing Black Screen & Connection Issues) ---
         function connect(uid, init) {
+            // Prevent duplicate connections or wrong direction
             if(!init && user.uid > uid) return; 
+            if(peers[uid]) return; // Already connected
+
             const pc = new RTCPeerConnection(rtcConfig);
-            pc.q = []; peers[uid] = pc;
+            // Queue for ICE candidates that arrive before remote description
+            pc.iceQueue = []; 
+            peers[uid] = pc;
+            
             if(myStream) myStream.getTracks().forEach(t => pc.addTrack(t, myStream));
             
             pc.ontrack = e => {
                 let v = document.getElementById(`v-${uid}`);
                 if(!v) {
                     const d = document.createElement('div');
-                    d.className = "relative w-32 aspect-video bg-gray-900 rounded-xl overflow-hidden shadow-lg border border-white/20 ring-1 ring-black/50";
+                    d.className = "relative w-32 aspect-video bg-gray-900 rounded-xl overflow-hidden shadow-lg border border-white/20 ring-1 ring-black/50 flex-shrink-0";
                     v = document.createElement('video');
-                    v.id = `v-${uid}`; v.className = "w-full h-full object-cover";
-                    v.autoplay = true; v.playsInline = true;
-                    d.appendChild(v); grid.appendChild(d);
+                    v.id = `v-${uid}`; 
+                    v.className = "w-full h-full object-cover";
+                    v.autoplay = true; 
+                    v.playsInline = true;
+                    // Mute remote videos slightly to prevent echo if no headphones, 
+                    // but usually we want to hear them.
+                    v.muted = false; 
+                    d.appendChild(v); 
+                    grid.appendChild(d);
                 }
                 v.srcObject = e.streams[0];
             };
             
-            pc.onicecandidate = e => { if(e.candidate) sendSig({type:'ice', val:e.candidate.toJSON(), target:uid}); };
+            pc.onicecandidate = e => { 
+                if(e.candidate) sendSig({type:'ice', val:e.candidate.toJSON(), target:uid}); 
+            };
             
             if(init) {
                 pc.createOffer().then(o => pc.setLocalDescription(o)).then(() => {
@@ -550,29 +585,64 @@
         }
 
         async function handleSignal(sig, ref) {
-            const pc = peers[sig.sender] || (connect(sig.sender, false), peers[sig.sender]);
+            // Ensure PC exists, else create passive connection
+            if(!peers[sig.sender]) connect(sig.sender, false);
+            const pc = peers[sig.sender];
+            
             try {
                 if(sig.type === 'offer') {
                     await pc.setRemoteDescription(new RTCSessionDescription(sig.val));
+                    // Process queued ICE candidates now that remote desc is set
+                    while(pc.iceQueue.length) {
+                        await pc.addIceCandidate(new RTCIceCandidate(pc.iceQueue.shift()));
+                    }
+                    
                     const a = await pc.createAnswer();
                     await pc.setLocalDescription(a);
                     sendSig({type:'answer', val:{type:a.type, sdp:a.sdp}, target:sig.sender});
+                    
                 } else if(sig.type === 'answer') {
                     await pc.setRemoteDescription(new RTCSessionDescription(sig.val));
+                    // Process queued ICE candidates
+                    while(pc.iceQueue.length) {
+                        await pc.addIceCandidate(new RTCIceCandidate(pc.iceQueue.shift()));
+                    }
+
                 } else if(sig.type === 'ice') {
-                    await pc.addIceCandidate(new RTCIceCandidate(sig.val));
+                    if (pc.remoteDescription) {
+                        await pc.addIceCandidate(new RTCIceCandidate(sig.val));
+                    } else {
+                        // Queue it if remote description isn't ready
+                        pc.iceQueue.push(sig.val);
+                    }
                 }
-            } catch(e){}
+            } catch(e){ console.error("Sig Error", e); }
             deleteDoc(ref);
         }
         
         async function sendSig(pl) { pl.sender=user.uid; await addDoc(collection(db, "rooms", room, "signals"), pl); }
 
         // --- HELPERS ---
-        window.loadYT = async () => {
-            const m = document.getElementById('ytUrl').value.match(/(?:v=|\/)([\w-]{11})/);
-            if(m) updateDoc(doc(db, "rooms", room), {'state.url': m[1], 'state.status': 'playing'});
+        window.loadMedia = async () => {
+            const raw = document.getElementById('ytUrl').value;
+            let url = raw, type = 'generic';
+
+            if(currentSource === 'yt') {
+                const m = raw.match(/(?:v=|\/)([\w-]{11})/);
+                if(m) { url = m[1]; type = 'yt'; }
+            } 
+            // Basic logic for other apps (User must provide embeddable link ideally)
+            else if(currentSource === 'ig') {
+                 // Try to force embed URL if it's a standard post
+                 if(raw.includes('instagram.com/p/') || raw.includes('instagram.com/reel/')) {
+                     url = raw.split('?')[0] + '/embed';
+                 }
+                 type = 'generic';
+            }
+
+            updateDoc(doc(db, "rooms", room), {'state.url': url, 'state.type': type, 'state.status': 'playing'});
         }
+
         window.sendMsg = async (e) => {
             e.preventDefault();
             const i = document.getElementById('chatIn');
@@ -586,30 +656,68 @@
             const el = document.getElementById('displayID'); el.innerText="COPIED!"; setTimeout(()=>el.innerText=`ID: ${room}`, 1500);
         }
         window.leave = () => location.reload();
-        window.toggleAudio = () => { if(myStream) myStream.getAudioTracks()[0].enabled = !myStream.getAudioTracks()[0].enabled; };
-        window.toggleVideo = () => { if(myStream) myStream.getVideoTracks()[0].enabled = !myStream.getVideoTracks()[0].enabled; };
+        window.toggleAudio = () => { 
+            if(myStream) {
+                const track = myStream.getAudioTracks()[0];
+                track.enabled = !track.enabled;
+                document.getElementById('btnAudio').classList.toggle('bg-red-500', !track.enabled);
+            }
+        };
+        window.toggleVideo = () => { 
+            if(myStream) {
+                const track = myStream.getVideoTracks()[0];
+                track.enabled = !track.enabled;
+                document.getElementById('btnVideo').classList.toggle('bg-red-500', !track.enabled);
+            }
+        };
         
+        // --- SCREEN SHARE (Fixed) ---
         window.shareScreen = async () => {
             try {
                 screenStream = await navigator.mediaDevices.getDisplayMedia({video:true});
+                
+                // Show my own screen in the main view
+                const mainVideo = document.getElementById('screenVideo');
+                mainVideo.srcObject = screenStream;
+                mainVideo.classList.remove('hidden');
+                
                 updateDoc(doc(db, "rooms", room), {'state.sharer':user.uid});
+                
                 const track = screenStream.getVideoTracks()[0];
+                
+                // Replace video track for all peers
                 Object.values(peers).forEach(pc => {
                     const sender = pc.getSenders().find(s => s.track.kind === 'video');
                     if(sender) sender.replaceTrack(track);
                 });
+                
                 track.onended = () => {
                     updateDoc(doc(db, "rooms", room), {'state.sharer':null});
-                    const cam = myStream.getVideoTracks()[0];
-                    Object.values(peers).forEach(pc => pc.getSenders().find(s => s.track.kind === 'video').replaceTrack(cam));
+                    const cam = myStream ? myStream.getVideoTracks()[0] : null;
+                    if(cam) {
+                        Object.values(peers).forEach(pc => {
+                            const sender = pc.getSenders().find(s => s.track.kind === 'video');
+                            if(sender) sender.replaceTrack(cam);
+                        });
+                    }
+                    mainVideo.classList.add('hidden');
+                    screenStream = null;
                 };
-            } catch(e){}
+            } catch(e){ console.error("Share failed", e); }
         }
 
         function spawnHeart() {
-            const h = document.createElement('div'); h.innerHTML='<i class="fas fa-heart"></i>'; h.className='heart-particle';
-            h.style.left=Math.random()*100+'vw'; h.style.fontSize=(Math.random()*20+10)+'px';
-            document.body.appendChild(h); setTimeout(()=>h.remove(), 3000);
+            const h = document.createElement('div'); h.innerHTML='<i class="fas fa-heart"></i>'; h.className='heart-particle fixed text-pink-500 pointer-events-none z-0';
+            h.style.left=Math.random()*100+'vw'; h.style.top='100vh';
+            h.style.fontSize=(Math.random()*20+10)+'px';
+            h.style.transition = "top 3s ease-in, opacity 3s ease-in";
+            document.body.appendChild(h); 
+            
+            requestAnimationFrame(() => {
+                h.style.top = '-10vh';
+                h.style.opacity = '0';
+            });
+            setTimeout(()=>h.remove(), 3000);
         }
 
         // Youtube
@@ -618,8 +726,11 @@
             ytPlayer = new YT.Player('ytPlayer', { height:'100%', width:'100%', playerVars:{'autoplay':0,'controls':1,'rel':0}, events:{
                 'onReady': ()=>ytReady=true,
                 'onStateChange': (e) => {
+                    // Only sync if I initiated the change (avoids loops)
+                    // Note: YouTube doesn't easily distinguish 'user click' vs 'programmatic',
+                    // so we rely on small tolerance in syncState
                     if(!amISyncing && (e.data===1 || e.data===2)) {
-                        updateDoc(doc(db, "rooms", room), {'state.status':e.data===1?'playing':'paused', 'state.time':ytPlayer.getCurrentTime()});
+                        updateDoc(doc(db, "rooms", room), {'state.status':e.data===1?'playing':'paused', 'state.time':ytPlayer.getCurrentTime(), 'state.type': 'yt'});
                     }
                 }
             }});
