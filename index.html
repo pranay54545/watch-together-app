@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WatchTogether - Ultimate v2</title>
+    <title>WatchTogether - Ultimate Fixed</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
@@ -20,7 +20,7 @@
         }
         @keyframes gradientBG { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
 
-        /* Floating Blobs (Theme Objects) */
+        /* Floating Blobs */
         .blob { position: absolute; filter: blur(60px); z-index: -1; opacity: 0.5; animation: float 10s infinite ease-in-out; transition: opacity 1s ease; }
         .blob-1 { top: -10%; left: -10%; width: 50vh; height: 50vh; background: #7c3aed; border-radius: 50%; }
         .blob-2 { bottom: -10%; right: -10%; width: 60vh; height: 60vh; background: #db2777; border-radius: 50%; animation-delay: -5s; }
@@ -33,41 +33,31 @@
             transition: opacity 0.5s ease, transform 0.5s ease;
         }
         
-        /* Interactive */
-        .btn-bounce:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        .btn-bounce:active { transform: scale(0.95); }
-        
         /* --- DRAGGABLE GRID --- */
         #camGrid {
             cursor: grab;
             touch-action: none;
             position: absolute; 
-            z-index: 60; /* Higher than controls */
+            z-index: 60; 
             display: flex;
             gap: 12px;
             padding: 8px;
             border-radius: 16px;
-            flex-wrap: nowrap; /* Prevent stacking overlap */
+            flex-wrap: nowrap; 
             max-width: 90vw;
             overflow-x: auto;
+            background: rgba(0, 0, 0, 0.3); /* Darker background for visibility */
+            backdrop-filter: blur(10px);
         }
         #camGrid:active { cursor: grabbing; }
 
-        /* --- CINEMA MODE (Auto Hide) --- */
-        body.cinema-mode .ui-element {
-            opacity: 0;
-            pointer-events: none;
-        }
-        body.cinema-mode .animated-bg, body.cinema-mode .blob {
-            opacity: 0.1; 
-        }
-        body.cinema-mode #camGrid {
-            opacity: 0.3; 
-            transition: opacity 0.5s;
-        }
+        /* --- CINEMA MODE --- */
+        body.cinema-mode .ui-element { opacity: 0; pointer-events: none; }
+        body.cinema-mode .animated-bg, body.cinema-mode .blob { opacity: 0.1; }
+        body.cinema-mode #camGrid { opacity: 0.2; transition: opacity 0.5s; }
         body.cinema-mode #camGrid:hover { opacity: 1; }
 
-        /* --- GATE ANIMATION (Fixed Heart) --- */
+        /* --- GATE ANIMATION --- */
         #gateOverlay { pointer-events: none; opacity: 0; transition: opacity 0.2s; z-index: 100; display: none; }
         #gateOverlay.active { opacity: 1; pointer-events: auto; display: flex; }
         
@@ -84,7 +74,6 @@
         #gateOverlay.opening .gate-left { transform: translateX(-120%); }
         #gateOverlay.opening .gate-right { transform: translateX(120%); }
 
-        /* Shake Animation */
         .shake-it { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
         @keyframes shake {
             10%, 90% { transform: translate3d(-2px, 0, 0); }
@@ -93,17 +82,14 @@
             40%, 60% { transform: translate3d(8px, 0, 0); }
         }
 
-        /* Utilities */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .hidden-important { display: none !important; }
         
-        /* Themes */
         .theme-love .blob-1 { background: #ec4899; }
         .theme-love .blob-2 { background: #f43f5e; }
         .theme-love .accent-text { color: #f472b6; }
         .theme-love .accent-bg { background-color: #db2777; }
 
-        /* Source Icons */
         .source-icon { filter: grayscale(1); opacity: 0.6; transition: all 0.2s; }
         .source-icon.active { filter: grayscale(0); opacity: 1; transform: scale(1.1); }
     </style>
@@ -114,24 +100,20 @@
     <div class="blob blob-1 ui-element"></div>
     <div class="blob blob-2 ui-element"></div>
 
-    <!-- GATE ANIMATION OVERLAY -->
+    <!-- GATE -->
     <div id="gateOverlay" class="fixed inset-0">
-        <div class="gate-door gate-left">
-            <div id="gateIconLeft" class="mr-[-2px] relative z-10"></div>
-        </div>
-        <div class="gate-door gate-right">
-            <div id="gateIconRight" class="ml-[-2px] relative z-10"></div>
-        </div>
+        <div class="gate-door gate-left"><div id="gateIconLeft" class="mr-[-2px] relative z-10"></div></div>
+        <div class="gate-door gate-right"><div id="gateIconRight" class="ml-[-2px] relative z-10"></div></div>
     </div>
 
     <!-- LOBBY -->
     <div id="lobby" class="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div class="glass p-8 rounded-[3rem] w-full max-w-md text-center relative overflow-hidden">
             <h1 class="text-5xl font-black mb-2 tracking-tighter">Watch<span class="text-blue-400 accent-text">Together</span></h1>
-            <p class="text-blue-200/80 font-bold mb-8">Cinema & Chill with Friends</p>
+            <p class="text-blue-200/80 font-bold mb-8">Ultimate Fixed Edition</p>
             
             <div id="configErr" class="hidden bg-red-500/20 border border-red-500/50 p-3 rounded-xl mb-4 text-xs text-left font-mono text-red-200">
-                ⚠️ CONFIG MISSING: Open code (Line 420) and paste Firebase Config.
+                ⚠️ CONFIG MISSING: Check Code Line 450
             </div>
 
             <div class="space-y-4">
@@ -164,7 +146,7 @@
 
     <!-- MAIN APP -->
     <div id="app" class="hidden fixed inset-0 flex flex-col">
-        <!-- Header (UI Element) - Z-Index 50 to stay on top -->
+        <!-- HEADER -->
         <div id="appHeader" class="absolute top-0 left-0 w-full p-4 z-50 pointer-events-none ui-element transition-opacity duration-500">
             <div class="glass max-w-4xl mx-auto h-16 rounded-full flex items-center justify-between px-6 pointer-events-auto shadow-2xl backdrop-blur-xl">
                 <div class="flex items-center gap-4">
@@ -174,39 +156,37 @@
                     </button>
                 </div>
                 <div class="flex items-center gap-3">
-                    <button onclick="shareScreen()" class="w-10 h-10 rounded-full bg-white/5 hover:bg-white/20 flex items-center justify-center transition-all text-white hover:text-blue-400" title="Share Screen"><i class="fas fa-desktop"></i></button>
+                    <button id="shareBtn" onclick="toggleScreenShare()" class="w-10 h-10 rounded-full bg-white/5 hover:bg-white/20 flex items-center justify-center transition-all text-white hover:text-blue-400" title="Share Screen"><i class="fas fa-desktop"></i></button>
                     <button onclick="leave()" class="bg-red-500/80 hover:bg-red-500 text-white px-5 py-2 rounded-full text-xs font-black shadow-lg">EXIT</button>
                 </div>
             </div>
         </div>
 
-        <!-- Main Stage -->
+        <!-- MAIN STAGE -->
         <div class="flex-1 flex w-full h-full relative">
-            <!-- Video Area (Full Screen) -->
             <div class="flex-1 bg-black relative overflow-hidden group">
                 
-                <!-- Players -->
+                <!-- PLAYERS -->
                 <div id="ytPlayer" class="w-full h-full pointer-events-auto"></div>
-                <!-- Generic Iframe for other apps (Instagram/Snapchat if compatible) -->
                 <iframe id="genericPlayer" class="hidden w-full h-full border-0 pointer-events-auto" allow="autoplay; encrypted-media"></iframe>
                 <video id="screenVideo" class="hidden w-full h-full object-contain bg-black" autoplay playsinline></video>
                 
-                <!-- Placeholder -->
+                <!-- PLACEHOLDER -->
                 <div id="placeholder" class="absolute inset-0 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm z-10 pointer-events-none ui-element transition-opacity duration-500">
                     <div class="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center mb-6 border-2 border-white/10 animate-pulse">
                         <i class="fas fa-film text-5xl text-white/20"></i>
                     </div>
                     <h2 class="text-2xl font-bold text-white/50">Ready to Watch?</h2>
-                    <p class="text-white/30 text-sm mt-2">Paste a link below to start</p>
+                    <p class="text-white/30 text-sm mt-2">Paste a YouTube, Instagram, or Snapchat link</p>
                 </div>
 
-                <!-- CONTROLS TRAY (Moved to Bottom to avoid Header Overlap) -->
+                <!-- CONTROLS TRAY -->
                 <div id="ytControls" class="absolute bottom-32 left-0 w-full z-40 flex flex-col items-center justify-end pb-4 transition-all duration-300 opacity-0 hover:opacity-100 focus-within:opacity-100 ui-element">
-                    <!-- App Selectors -->
-                    <div class="flex gap-4 mb-3 p-2 bg-black/40 backdrop-blur rounded-full border border-white/5 shadow-xl">
+                    <div class="flex gap-4 mb-3 p-2 bg-black/60 backdrop-blur rounded-full border border-white/10 shadow-xl">
                         <button onclick="setSource('yt')" class="source-icon active text-red-500 text-xl" title="YouTube"><i class="fab fa-youtube"></i></button>
                         <button onclick="setSource('ig')" class="source-icon text-pink-500 text-xl" title="Instagram"><i class="fab fa-instagram"></i></button>
                         <button onclick="setSource('snap')" class="source-icon text-yellow-400 text-xl" title="Snapchat"><i class="fab fa-snapchat-ghost"></i></button>
+                        <button onclick="setSource('tik')" class="source-icon text-cyan-400 text-xl" title="TikTok"><i class="fab fa-tiktok"></i></button>
                     </div>
 
                     <div class="glass p-2 rounded-full flex gap-2 shadow-2xl scale-95 hover:scale-100 transition-transform w-[500px] max-w-[90%]">
@@ -215,9 +195,8 @@
                     </div>
                 </div>
 
-                <!-- WebRTC Overlay (Fixed Position, Draggable) -->
-                <!-- Added safe padding and max-width to prevent overlap -->
-                <div id="camGrid" class="absolute bottom-6 left-1/2 -translate-x-1/2 bg-black/20 backdrop-blur-md rounded-2xl border border-white/5 shadow-2xl transition-all">
+                <!-- WEBCAM GRID (Draggable) -->
+                <div id="camGrid" class="absolute bottom-6 left-1/2 -translate-x-1/2 rounded-2xl border border-white/10 shadow-2xl transition-all">
                     <!-- Me -->
                     <div class="relative w-32 aspect-video bg-gray-900 rounded-xl overflow-hidden shadow-2xl border border-white/20 ring-1 ring-black/50 hover:scale-105 transition-transform flex-shrink-0">
                         <video id="myVideo" class="w-full h-full object-cover transform -scale-x-100" autoplay muted playsinline></video>
@@ -231,7 +210,7 @@
                 </div>
             </div>
 
-            <!-- Chat (UI Element) -->
+            <!-- CHAT -->
             <div id="chatBoxContainer" class="absolute right-4 bottom-36 w-80 h-80 glass rounded-3xl flex flex-col hidden md:flex border border-white/10 shadow-2xl z-40 transition-opacity duration-500 ui-element">
                 <div class="p-4 border-b border-white/5 flex justify-between items-center">
                     <span class="font-bold text-xs tracking-wider text-white/70">LIVE CHAT</span>
@@ -252,9 +231,7 @@
         import { getFirestore, collection, doc, setDoc, onSnapshot, updateDoc, addDoc, serverTimestamp, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 
-        // ==========================================
-        // 🚨 CONFIGURATION
-        // ==========================================
+        // 🚨 FIREBASE CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyDGgBZL5GkdDG9Hhb66HGNRTUfOjtt2xR0",
             authDomain: "watchparty-57597.firebaseapp.com",
@@ -263,23 +240,27 @@
             messagingSenderId: "214088005820",
             appId: "1:214088005820:web:8515c329f52afaab7a78b9"
         };
-        // ==========================================
 
         let app, db, auth, user, room;
         let mode = 'friends', myStream, screenStream;
         let peers = {};
         let ytPlayer, ytReady = false, amISyncing = false, playState = 'paused';
         let currentSource = 'yt';
-        const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+        let isSharingScreen = false;
+        
+        // STUN Servers (Essential for connecting peers)
+        const rtcConfig = { 
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' }
+            ] 
+        };
 
-        // --- INIT ---
+        // --- BOOTSTRAP ---
         async function boot() {
-            // Check if user provided API Key in the config above or if it's still empty
             if (!firebaseConfig.apiKey) {
-                // Try to use a default or show error
-                // For this code block, we assume user pastes it. 
-                // Showing error if empty:
-                // document.getElementById('configErr').classList.remove('hidden');
+                document.getElementById('configErr').classList.remove('hidden');
+                return;
             }
             try {
                 app = initializeApp(firebaseConfig);
@@ -291,30 +272,28 @@
                 document.getElementById('status').classList.add('text-green-400');
             } catch(e) {
                 console.error(e);
-                // Don't alert aggressively
-                document.getElementById('status').innerText = "Config Required (See code)";
-                document.getElementById('configErr').classList.remove('hidden');
+                document.getElementById('status').innerText = "Connection Failed";
             }
         }
 
-        // --- DRAGGABLE WEBCAMS (Fixed Logic) ---
+        // --- UI LOGIC ---
+        // Draggable Webcam Grid
         const grid = document.getElementById('camGrid');
         let isDragging = false, startX, startY, initialLeft, initialTop;
 
         grid.addEventListener('mousedown', (e) => {
-            if(e.target.tagName === 'BUTTON' || e.target.tagName === 'I' || e.target.tagName === 'VIDEO') return;
+            if(['BUTTON','I','VIDEO','INPUT'].includes(e.target.tagName)) return;
             isDragging = true;
             startX = e.clientX; startY = e.clientY;
             
-            // Switch to absolute coordinates if centered
             const rect = grid.getBoundingClientRect();
+            // Reset to absolute pixels to prevent jumping
             if (window.getComputedStyle(grid).transform !== 'none') {
                 grid.style.transform = 'none';
                 grid.style.left = rect.left + 'px';
                 grid.style.top = rect.top + 'px';
                 grid.style.bottom = 'auto'; 
             }
-            
             initialLeft = grid.offsetLeft; initialTop = grid.offsetTop;
             grid.style.cursor = 'grabbing';
         });
@@ -322,57 +301,38 @@
         window.addEventListener('mousemove', (e) => {
             if (!isDragging) return;
             e.preventDefault();
-            const dx = e.clientX - startX;
-            const dy = e.clientY - startY;
-            grid.style.left = `${initialLeft + dx}px`;
-            grid.style.top = `${initialTop + dy}px`;
+            grid.style.left = `${initialLeft + (e.clientX - startX)}px`;
+            grid.style.top = `${initialTop + (e.clientY - startY)}px`;
         });
-
         window.addEventListener('mouseup', () => { isDragging = false; grid.style.cursor = 'grab'; });
 
-        // --- AUTO HIDE ---
+        // Auto Hide Controls
         let idleTimer;
         function resetIdleTimer() {
             document.body.classList.remove('cinema-mode');
             clearTimeout(idleTimer);
-            // Only hide if playing and mouse hasn't moved for 3s
             if (playState === 'playing') {
-                idleTimer = setTimeout(() => {
-                    document.body.classList.add('cinema-mode');
-                }, 3000);
+                idleTimer = setTimeout(() => document.body.classList.add('cinema-mode'), 3000);
             }
         }
-        window.addEventListener('mousemove', resetIdleTimer);
-        window.addEventListener('click', resetIdleTimer);
-        window.addEventListener('keydown', resetIdleTimer);
+        ['mousemove','click','keydown'].forEach(e => window.addEventListener(e, resetIdleTimer));
 
-        // --- UI HELPERS ---
+        // Source Selector
         window.setSource = (src) => {
             currentSource = src;
             document.querySelectorAll('.source-icon').forEach(el => el.classList.remove('active'));
             event.currentTarget.classList.add('active');
-            
             const input = document.getElementById('ytUrl');
-            if(src === 'yt') input.placeholder = "Paste YouTube Link...";
-            else if(src === 'ig') input.placeholder = "Paste Instagram Post URL...";
-            else if(src === 'snap') input.placeholder = "Paste Snapchat URL...";
+            const placeholders = {
+                'yt': "Paste YouTube Link...",
+                'ig': "Paste Instagram Post Link...",
+                'snap': "Paste Snapchat Embed Link...",
+                'tik': "Paste TikTok Video Link..."
+            };
+            input.placeholder = placeholders[src] || "Paste Link...";
         }
 
-        function createPixelHeartParts() {
-            const color = mode === 'love' ? '#ec4899' : '#60a5fa'; 
-            const s = 10;
-            let leftHTML = '', rightHTML = '';
-            const heartMap = ["0011000","0111100","1111110","1111111","1111111","0111111","0011111","0001111","0000111","0000011"];
-
-            heartMap.forEach((row, r) => {
-                for(let c=0; c<7; c++) if(row[c] === '1') leftHTML += `<div style="position:absolute; width:${s}px; height:${s}px; background:${color}; top:${r*s}px; left:${c*s}px; box-shadow: 2px 2px 0 rgba(0,0,0,0.2);"></div>`;
-                for(let c=0; c<7; c++) if(row[6-c] === '1') rightHTML += `<div style="position:absolute; width:${s}px; height:${s}px; background:${color}; top:${r*s}px; left:${c*s}px; box-shadow: 2px 2px 0 rgba(0,0,0,0.2);"></div>`;
-            });
-            document.getElementById('gateIconLeft').innerHTML = `<div style="position:relative; width:70px; height:100px; transform: scale(4); transform-origin: top right;">${leftHTML}</div>`;
-            document.getElementById('gateIconRight').innerHTML = `<div style="position:relative; width:70px; height:100px; transform: scale(4); transform-origin: top left;">${rightHTML}</div>`;
-        }
-
-        // --- LOBBY & JOIN ---
+        // --- CORE ROOM LOGIC ---
         window.setMode = (m) => {
             mode = m;
             document.getElementById('btn-friends').classList.toggle('border-blue-500', m==='friends');
@@ -406,16 +366,10 @@
         }
 
         async function join(id) {
-            createPixelHeartParts();
+            // Animation
             const overlay = document.getElementById('gateOverlay');
-            const leftI = document.getElementById('gateIconLeft');
-            const rightI = document.getElementById('gateIconRight');
-            
             overlay.classList.add('active');
-            await new Promise(r => setTimeout(r, 800));
-            leftI.classList.add('shake-it');
-            rightI.classList.add('shake-it');
-            await new Promise(r => setTimeout(r, 600));
+            await new Promise(r => setTimeout(r, 800)); // wait for close
             
             room = id;
             document.getElementById('lobby').classList.add('hidden');
@@ -423,43 +377,54 @@
             document.getElementById('displayID').innerText = `ID: ${id}`;
             
             overlay.classList.add('opening');
-            setTimeout(() => {
-                overlay.classList.remove('active', 'opening');
-                leftI.classList.remove('shake-it');
-                rightI.classList.remove('shake-it');
-                if(mode === 'love') setInterval(spawnHeart, 1500);
-            }, 1500);
+            setTimeout(() => overlay.classList.remove('active', 'opening'), 1500);
 
+            // Get Media
             try {
                 myStream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
                 document.getElementById('myVideo').srcObject = myStream;
-                document.getElementById('myVideo').muted = true; // Always mute self
-            } catch(e) { console.warn("No Camera"); }
+                document.getElementById('myVideo').muted = true; 
+            } catch(e) { console.warn("No Camera", e); }
 
+            // DB Join
             const nick = document.getElementById('username').value || "Guest";
             await setDoc(doc(db, "rooms", room, "users", user.uid), { name: nick, active: true });
             window.addEventListener('beforeunload', () => deleteDoc(doc(db, "rooms", room, "users", user.uid)));
+            
             listen();
         }
 
-        // --- SYNC & LOGIC ---
+        // --- FIRESTORE LISTENERS ---
         function listen() {
+            // User List & Peer Connection
             onSnapshot(collection(db, "rooms", room, "users"), snap => {
                 document.getElementById('userCount').innerText = `${snap.size} Online`;
                 snap.docChanges().forEach(c => {
-                    // Connect if new user added AND we haven't connected yet
+                    // If new user joins and I am already here, I initiate connection
                     if(c.type === 'added' && c.doc.id !== user.uid && !peers[c.doc.id]) {
-                        connect(c.doc.id, true); // Initiate connection
+                        // Using comparison to prevent double connections (Lower UID initiates)
+                        if (user.uid < c.doc.id) {
+                            connect(c.doc.id, true);
+                        }
+                    }
+                    if(c.type === 'removed') {
+                        if(peers[c.doc.id]) { peers[c.doc.id].close(); delete peers[c.doc.id]; }
+                        const v = document.getElementById(`v-${c.doc.id}`);
+                        if(v) v.parentNode.remove();
                     }
                 });
             });
 
+            // Signaling (SDP/ICE)
             onSnapshot(collection(db, "rooms", room, "signals"), snap => {
                 snap.docChanges().forEach(c => {
-                    if(c.type === 'added' && c.doc.data().target === user.uid) handleSignal(c.doc.data(), c.doc.ref);
+                    if(c.type === 'added' && c.doc.data().target === user.uid) {
+                        handleSignal(c.doc.data(), c.doc.ref);
+                    }
                 });
             });
 
+            // Chat
             onSnapshot(collection(db, "rooms", room, "messages"), snap => {
                 const box = document.getElementById('chatBox');
                 box.innerHTML = '';
@@ -473,35 +438,36 @@
                 box.scrollTop = 9999;
             });
 
+            // Playback State
             onSnapshot(doc(db, "rooms", room), snap => {
-                if(!snap.exists()) return;
-                syncState(snap.data().state);
+                if(snap.exists()) syncState(snap.data().state);
             });
         }
 
+        // --- SYNC ENGINE ---
         function syncState(s) {
             const scr = document.getElementById('screenVideo');
             const yt = document.getElementById('ytPlayer');
             const gen = document.getElementById('genericPlayer');
             const ph = document.getElementById('placeholder');
             
-            // Screen Share Priority
+            // 1. Screen Share Mode
             if(s.sharer) {
                 yt.classList.add('hidden-important');
                 gen.classList.add('hidden-important');
                 ph.classList.add('hidden-important');
                 scr.classList.remove('hidden');
                 
-                // If I am not sharing, find the sharer's stream
+                // If I'm not the sharer, look for their stream in peers
                 if(s.sharer !== user.uid) {
                     const el = document.getElementById(`v-${s.sharer}`);
-                    // If element exists and srcObject is different
+                    // Copy stream from tiny webcam view to main view
                     if(el && el.srcObject && scr.srcObject !== el.srcObject) {
                         scr.srcObject = el.srcObject;
                         scr.play().catch(e=>console.log("Autoplay blocked", e));
                     }
                 } else {
-                    // If I am sharing, show my screen stream (so I know what I'm sharing)
+                    // I am sharing, show my own stream
                     if(screenStream) scr.srcObject = screenStream;
                 }
                 playState = 'playing';
@@ -509,10 +475,10 @@
                 return;
             } else {
                 scr.classList.add('hidden');
-                scr.srcObject = null; // Unbind
+                scr.srcObject = null; 
             }
 
-            // Type handling
+            // 2. Video Player Mode
             if (s.type === 'yt') {
                 gen.classList.add('hidden-important');
                 yt.classList.remove('hidden-important');
@@ -526,13 +492,13 @@
                     
                     if(s.status === 'playing') {
                         if(ytPlayer.getPlayerState() !== 1) ytPlayer.playVideo();
-                        if(diff > 1) ytPlayer.seekTo(s.time, true); // Tightened to 1s
+                        if(diff > 0.5) ytPlayer.seekTo(s.time, true); // Tight Sync
                     } else {
                         if(ytPlayer.getPlayerState() !== 2) ytPlayer.pauseVideo();
                     }
                 }
             } else {
-                // Generic (IG/Snap/Other)
+                // Generic (Embeds)
                 yt.classList.add('hidden-important');
                 gen.classList.remove('hidden-important');
                 ph.classList.add('hidden-important');
@@ -541,19 +507,20 @@
             resetIdleTimer();
         }
 
-        // --- WEBRTC (Fixing Black Screen & Connection Issues) ---
+        // --- WEBRTC CORE (REBUILT) ---
         function connect(uid, init) {
-            // Prevent duplicate connections or wrong direction
-            if(!init && user.uid > uid) return; 
-            if(peers[uid]) return; // Already connected
+            if(peers[uid]) return; 
 
             const pc = new RTCPeerConnection(rtcConfig);
-            // Queue for ICE candidates that arrive before remote description
-            pc.iceQueue = []; 
             peers[uid] = pc;
-            
-            if(myStream) myStream.getTracks().forEach(t => pc.addTrack(t, myStream));
-            
+            pc.iceQueue = []; 
+
+            // Add local tracks
+            if(myStream) {
+                myStream.getTracks().forEach(track => pc.addTrack(track, myStream));
+            }
+
+            // Handle remote tracks
             pc.ontrack = e => {
                 let v = document.getElementById(`v-${uid}`);
                 if(!v) {
@@ -564,65 +531,91 @@
                     v.className = "w-full h-full object-cover";
                     v.autoplay = true; 
                     v.playsInline = true;
-                    // Mute remote videos slightly to prevent echo if no headphones, 
-                    // but usually we want to hear them.
-                    v.muted = false; 
                     d.appendChild(v); 
                     grid.appendChild(d);
                 }
                 v.srcObject = e.streams[0];
+                // Force play to fix black screen
+                v.onloadedmetadata = () => v.play().catch(console.error);
             };
-            
+
+            // ICE Candidates
             pc.onicecandidate = e => { 
                 if(e.candidate) sendSig({type:'ice', val:e.candidate.toJSON(), target:uid}); 
             };
             
+            // Connection State Monitoring
+            pc.onconnectionstatechange = () => {
+                console.log(`Connection to ${uid}: ${pc.connectionState}`);
+                if (pc.connectionState === 'failed') {
+                    pc.restartIce();
+                }
+            };
+
+            // Init Offer
             if(init) {
-                pc.createOffer().then(o => pc.setLocalDescription(o)).then(() => {
-                    sendSig({type:'offer', val:{type:pc.localDescription.type, sdp:pc.localDescription.sdp}, target:uid});
-                });
+                pc.createOffer()
+                    .then(o => pc.setLocalDescription(o))
+                    .then(() => sendSig({type:'offer', val:{type:pc.localDescription.type, sdp:pc.localDescription.sdp}, target:uid}));
             }
         }
 
         async function handleSignal(sig, ref) {
-            // Ensure PC exists, else create passive connection
+            // Connect if not already connected (Passive side)
             if(!peers[sig.sender]) connect(sig.sender, false);
             const pc = peers[sig.sender];
             
             try {
                 if(sig.type === 'offer') {
                     await pc.setRemoteDescription(new RTCSessionDescription(sig.val));
-                    // Process queued ICE candidates now that remote desc is set
-                    while(pc.iceQueue.length) {
-                        await pc.addIceCandidate(new RTCIceCandidate(pc.iceQueue.shift()));
-                    }
-                    
                     const a = await pc.createAnswer();
                     await pc.setLocalDescription(a);
                     sendSig({type:'answer', val:{type:a.type, sdp:a.sdp}, target:sig.sender});
-                    
-                } else if(sig.type === 'answer') {
+                    // Flush queued ICE
+                    processIceQueue(pc);
+                } 
+                else if(sig.type === 'answer') {
                     await pc.setRemoteDescription(new RTCSessionDescription(sig.val));
-                    // Process queued ICE candidates
-                    while(pc.iceQueue.length) {
-                        await pc.addIceCandidate(new RTCIceCandidate(pc.iceQueue.shift()));
-                    }
-
-                } else if(sig.type === 'ice') {
+                    // Flush queued ICE
+                    processIceQueue(pc);
+                } 
+                else if(sig.type === 'ice') {
                     if (pc.remoteDescription) {
-                        await pc.addIceCandidate(new RTCIceCandidate(sig.val));
+                        await pc.addIceCandidate(new RTCIceCandidate(sig.val)).catch(e=>console.log("Ice Error",e));
                     } else {
-                        // Queue it if remote description isn't ready
-                        pc.iceQueue.push(sig.val);
+                        pc.iceQueue.push(sig.val); // Queue until Remote Desc is set
                     }
                 }
-            } catch(e){ console.error("Sig Error", e); }
-            deleteDoc(ref);
+            } catch(e){ console.error("Signal Error", e); }
+            deleteDoc(ref); // Clean up signal
+        }
+        
+        async function processIceQueue(pc) {
+            while(pc.iceQueue && pc.iceQueue.length) {
+                const c = pc.iceQueue.shift();
+                await pc.addIceCandidate(new RTCIceCandidate(c)).catch(e=>console.log("Queued Ice Error",e));
+            }
         }
         
         async function sendSig(pl) { pl.sender=user.uid; await addDoc(collection(db, "rooms", room, "signals"), pl); }
 
-        // --- HELPERS ---
+        // --- MEDIA HELPERS ---
+        function parseUrl(url, type) {
+            // Instagram Embed
+            if (url.includes('instagram.com')) {
+                // Ensure it ends with /embed
+                if (!url.includes('/embed')) {
+                    // Remove query params first
+                    let clean = url.split('?')[0];
+                    if (clean.endsWith('/')) clean = clean.slice(0, -1);
+                    return clean + '/embed';
+                }
+            }
+            // TikTok Embed logic is complex, usually implies generic iframe or specific embed endpoint
+            // For now, we return as is, hoping user pasted embed link.
+            return url;
+        }
+
         window.loadMedia = async () => {
             const raw = document.getElementById('ytUrl').value;
             let url = raw, type = 'generic';
@@ -631,13 +624,12 @@
                 const m = raw.match(/(?:v=|\/)([\w-]{11})/);
                 if(m) { url = m[1]; type = 'yt'; }
             } 
-            // Basic logic for other apps (User must provide embeddable link ideally)
             else if(currentSource === 'ig') {
-                 // Try to force embed URL if it's a standard post
-                 if(raw.includes('instagram.com/p/') || raw.includes('instagram.com/reel/')) {
-                     url = raw.split('?')[0] + '/embed';
-                 }
+                 url = parseUrl(raw, 'ig');
                  type = 'generic';
+            }
+            else {
+                type = 'generic';
             }
 
             updateDoc(doc(db, "rooms", room), {'state.url': url, 'state.type': type, 'state.status': 'playing'});
@@ -656,6 +648,7 @@
             const el = document.getElementById('displayID'); el.innerText="COPIED!"; setTimeout(()=>el.innerText=`ID: ${room}`, 1500);
         }
         window.leave = () => location.reload();
+        
         window.toggleAudio = () => { 
             if(myStream) {
                 const track = myStream.getAudioTracks()[0];
@@ -671,70 +664,90 @@
             }
         };
         
-        // --- SCREEN SHARE (Fixed) ---
-        window.shareScreen = async () => {
-            try {
-                screenStream = await navigator.mediaDevices.getDisplayMedia({video:true});
-                
-                // Show my own screen in the main view
-                const mainVideo = document.getElementById('screenVideo');
-                mainVideo.srcObject = screenStream;
-                mainVideo.classList.remove('hidden');
-                
-                updateDoc(doc(db, "rooms", room), {'state.sharer':user.uid});
-                
-                const track = screenStream.getVideoTracks()[0];
-                
-                // Replace video track for all peers
-                Object.values(peers).forEach(pc => {
-                    const sender = pc.getSenders().find(s => s.track.kind === 'video');
-                    if(sender) sender.replaceTrack(track);
-                });
-                
-                track.onended = () => {
-                    updateDoc(doc(db, "rooms", room), {'state.sharer':null});
-                    const cam = myStream ? myStream.getVideoTracks()[0] : null;
-                    if(cam) {
-                        Object.values(peers).forEach(pc => {
-                            const sender = pc.getSenders().find(s => s.track.kind === 'video');
-                            if(sender) sender.replaceTrack(cam);
-                        });
-                    }
-                    mainVideo.classList.add('hidden');
-                    screenStream = null;
-                };
-            } catch(e){ console.error("Share failed", e); }
-        }
-
-        function spawnHeart() {
-            const h = document.createElement('div'); h.innerHTML='<i class="fas fa-heart"></i>'; h.className='heart-particle fixed text-pink-500 pointer-events-none z-0';
-            h.style.left=Math.random()*100+'vw'; h.style.top='100vh';
-            h.style.fontSize=(Math.random()*20+10)+'px';
-            h.style.transition = "top 3s ease-in, opacity 3s ease-in";
-            document.body.appendChild(h); 
+        window.toggleScreenShare = async () => {
+            const btn = document.getElementById('shareBtn');
             
-            requestAnimationFrame(() => {
-                h.style.top = '-10vh';
-                h.style.opacity = '0';
-            });
-            setTimeout(()=>h.remove(), 3000);
+            if (isSharingScreen) {
+                // STOP SHARING
+                updateDoc(doc(db, "rooms", room), {'state.sharer':null});
+                
+                // Revert tracks to camera
+                const camTrack = myStream ? myStream.getVideoTracks()[0] : null;
+                if(camTrack) {
+                    Object.values(peers).forEach(pc => {
+                        const sender = pc.getSenders().find(s => s.track.kind === 'video');
+                        if(sender) sender.replaceTrack(camTrack);
+                    });
+                }
+                
+                // Stop screen stream locally
+                if(screenStream) {
+                    screenStream.getTracks().forEach(t => t.stop());
+                    screenStream = null;
+                }
+                
+                document.getElementById('screenVideo').classList.add('hidden');
+                btn.classList.remove('text-green-400');
+                isSharingScreen = false;
+                
+            } else {
+                // START SHARING
+                try {
+                    screenStream = await navigator.mediaDevices.getDisplayMedia({video:true});
+                    const screenTrack = screenStream.getVideoTracks()[0];
+                    
+                    // Show locally
+                    const mainVideo = document.getElementById('screenVideo');
+                    mainVideo.srcObject = screenStream;
+                    mainVideo.classList.remove('hidden');
+                    
+                    // Tell DB
+                    updateDoc(doc(db, "rooms", room), {'state.sharer':user.uid});
+                    
+                    // Replace tracks for all connected peers
+                    Object.values(peers).forEach(pc => {
+                        const sender = pc.getSenders().find(s => s.track.kind === 'video');
+                        if(sender) sender.replaceTrack(screenTrack);
+                    });
+                    
+                    // Handle system "Stop Sharing" button
+                    screenTrack.onended = () => {
+                        if(isSharingScreen) window.toggleScreenShare(); // triggering toggle handles the cleanup
+                    };
+                    
+                    btn.classList.add('text-green-400');
+                    isSharingScreen = true;
+                } catch(e) { console.error("Share failed", e); }
+            }
         }
 
-        // Youtube
+        // Youtube API
         const tag = document.createElement('script'); tag.src = "https://www.youtube.com/iframe_api"; document.body.appendChild(tag);
         window.onYouTubeIframeAPIReady = () => {
             ytPlayer = new YT.Player('ytPlayer', { height:'100%', width:'100%', playerVars:{'autoplay':0,'controls':1,'rel':0}, events:{
                 'onReady': ()=>ytReady=true,
                 'onStateChange': (e) => {
-                    // Only sync if I initiated the change (avoids loops)
-                    // Note: YouTube doesn't easily distinguish 'user click' vs 'programmatic',
-                    // so we rely on small tolerance in syncState
                     if(!amISyncing && (e.data===1 || e.data===2)) {
                         updateDoc(doc(db, "rooms", room), {'state.status':e.data===1?'playing':'paused', 'state.time':ytPlayer.getCurrentTime(), 'state.type': 'yt'});
                     }
                 }
             }});
         };
+        
+        // Gate Icon Logic
+        function createPixelHeartParts() {
+            const color = mode === 'love' ? '#ec4899' : '#60a5fa'; 
+            const s = 10;
+            let leftHTML = '', rightHTML = '';
+            const heartMap = ["0011000","0111100","1111110","1111111","1111111","0111111","0011111","0001111","0000111","0000011"];
+            heartMap.forEach((row, r) => {
+                for(let c=0; c<7; c++) if(row[c] === '1') leftHTML += `<div style="position:absolute; width:${s}px; height:${s}px; background:${color}; top:${r*s}px; left:${c*s}px; box-shadow: 2px 2px 0 rgba(0,0,0,0.2);"></div>`;
+                for(let c=0; c<7; c++) if(row[6-c] === '1') rightHTML += `<div style="position:absolute; width:${s}px; height:${s}px; background:${color}; top:${r*s}px; left:${c*s}px; box-shadow: 2px 2px 0 rgba(0,0,0,0.2);"></div>`;
+            });
+            document.getElementById('gateIconLeft').innerHTML = `<div style="position:relative; width:70px; height:100px; transform: scale(4); transform-origin: top right;">${leftHTML}</div>`;
+            document.getElementById('gateIconRight').innerHTML = `<div style="position:relative; width:70px; height:100px; transform: scale(4); transform-origin: top left;">${rightHTML}</div>`;
+        }
+        createPixelHeartParts();
 
         boot();
     </script>
