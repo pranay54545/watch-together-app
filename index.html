@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WatchTogether - Ultimate</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Nunito', sans-serif; background-color: #0f172a; color: white; overflow: hidden; }
+        
+        /* --- ANIMATED BACKGROUND --- */
+        .animated-bg {
+            position: absolute; inset: 0; z-index: -1;
+            background: linear-gradient(45deg, #1a1a2e, #16213e, #2d1b36, #1a1a2e);
+            background-size: 400% 400%; animation: gradientBG 15s ease infinite;
+            transition: opacity 1s ease;
+        }
+        @keyframes gradientBG { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+
+        /* Floating Blobs (Theme Objects) */
+        .blob { position: absolute; filter: blur(60px); z-index: -1; opacity: 0.5; animation: float 10s infinite ease-in-out; transition: opacity 1s ease; }
+        .blob-1 { top: -10%; left: -10%; width: 50vh; height: 50vh; background: #7c3aed; border-radius: 50%; }
+        .blob-2 { bottom: -10%; right: -10%; width: 60vh; height: 60vh; background: #db2777; border-radius: 50%; animation-delay: -5s; }
+        @keyframes float { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(20px, -20px); } }
+
+        /* Glass UI */
+        .glass {
+            background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        
+        /* Interactive */
+        .btn-bounce:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .btn-bounce:active { transform: scale(0.95); }
+        
+        /* --- DRAGGABLE GRID --- */
+        #camGrid {
+            cursor: grab;
+            touch-action: none;
+            position: absolute; /* Essential for dragging */
+            z-index: 50;
+        }
+        #camGrid:active { cursor: grabbing; }
+
+        /* --- CINEMA MODE (Auto Hide) --- */
+        body.cinema-mode .ui-element {
+            opacity: 0;
+            pointer-events: none;
+        }
+        body.cinema-mode .animated-bg, body.cinema-mode .blob {
+            opacity: 0.1; /* Dim background */
+        }
+        body.cinema-mode #camGrid {
+            opacity: 0.4; /* Dim cams slightly when idle */
+            transition: opacity 0.5s;
+        }
+        body.cinema-mode #camGrid:hover { opacity: 1; }
+
+        /* --- GATE ANIMATION (Fixed Heart) --- */
+        #gateOverlay { pointer-events: none; opacity: 0; transition: opacity 0.2s; z-index: 100; display: none; }
+        #gateOverlay.active { opacity: 1; pointer-events: auto; display: flex; }
+        
+        .gate-door {
+            position: absolute; top: 0; bottom: 0; width: 50%; background: #0f172a;
+            transition: transform 1.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); /* Bouncy open */
+            display: flex; align-items: center; overflow: visible; z-index: 101;
+        }
+        .gate-left { left: 0; justify-content: flex-end; transform: translateX(-100%); border-right: 2px solid rgba(255,255,255,0.1); }
+        .gate-right { right: 0; justify-content: flex-start; transform: translateX(100%); border-left: 2px solid rgba(255,255,255,0.1); }
+        
+        #gateOverlay.active .gate-left { transform: translateX(0); }
+        #gateOverlay.active .gate-right { transform: translateX(0); }
+        #gateOverlay.opening .gate-left { transform: translateX(-120%); }
+        #gateOverlay.opening .gate-right { transform: translateX(120%); }
+
+        /* TRUE PIXEL ART CSS */
+        .pixel-art { width: 150px; height: 300px; position: relative; }
+        .pixel { position: absolute; width: 10px; height: 10px; box-shadow: 0 0 5px rgba(0,0,0,0.2); }
+        
+        /* Shake Animation */
+        .shake-it { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-8px, 0, 0); }
+            40%, 60% { transform: translate3d(8px, 0, 0); }
+        }
+
+        /* Utilities */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .hidden-important { display: none !important; }
+        
+        /* Themes */
+        .theme-love .blob-1 { background: #ec4899; }
+        .theme-love .blob-2 { background: #f43f5e; }
+        .theme-love .accent-text { color: #f472b6; }
+        .theme-love .accent-bg { background-color: #db2777; }
+    </style>
+</head>
+<body>
+
+    <div class="animated-bg"></div>
+    <div class="blob blob-1 ui-element"></div>
+    <div class="blob blob-2 ui-element"></div>
+
+    <!-- GATE ANIMATION OVERLAY -->
+    <div id="gateOverlay" class="fixed inset-0">
+        <div class="gate-door gate-left">
+            <div id="gateIconLeft" class="mr-[-2px] relative z-10"></div>
+        </div>
+        <div class="gate-door gate-right">
+            <div id="gateIconRight" class="ml-[-2px] relative z-10"></div>
+        </div>
+    </div>
+
+    <!-- LOBBY -->
+    <div id="lobby" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="glass p-8 rounded-[3rem] w-full max-w-md text-center relative overflow-hidden">
+            <h1 class="text-5xl font-black mb-2 tracking-tighter">Watch<span class="text-blue-400 accent-text">Together</span></h1>
+            <p class="text-blue-200/80 font-bold mb-8">Cinema & Chill with Friends</p>
+            
+            <div id="configErr" class="hidden bg-red-500/20 border border-red-500/50 p-3 rounded-xl mb-4 text-xs text-left font-mono text-red-200">
+                ⚠️ CONFIG MISSING: Open code (Line 420) and paste Firebase Config.
+            </div>
+
+            <div class="space-y-4">
+                <input id="username" type="text" placeholder="Choose a Nickname" class="w-full bg-black/20 border-2 border-white/10 rounded-2xl p-4 text-center font-bold text-white placeholder-white/30 focus:border-blue-400 outline-none transition-all">
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="setMode('friends')" id="btn-friends" class="glass p-4 rounded-2xl border-2 border-blue-500/50 bg-blue-500/10 hover:bg-blue-500/20 transition-all group">
+                        <i class="fas fa-rocket text-3xl mb-2 text-blue-400 group-hover:scale-110 transition-transform block"></i>
+                        <span class="font-bold text-sm">Squad</span>
+                    </button>
+                    <button onclick="setMode('love')" id="btn-love" class="glass p-4 rounded-2xl border-2 border-transparent hover:border-pink-500/50 hover:bg-pink-500/10 transition-all group">
+                        <i class="fas fa-heart text-3xl mb-2 text-pink-400 group-hover:scale-110 transition-transform block"></i>
+                        <span class="font-bold text-sm">Date Night</span>
+                    </button>
+                </div>
+
+                <div class="pt-4 space-y-3">
+                    <button id="createBtn" onclick="createRoom()" class="w-full bg-blue-600 hover:bg-blue-500 p-4 rounded-2xl font-black text-lg shadow-lg btn-bounce accent-bg disabled:opacity-50 disabled:cursor-wait">
+                        ✨ Create Room
+                    </button>
+                    <div class="flex gap-2">
+                        <input id="roomInput" type="text" placeholder="Enter Room ID" class="flex-1 bg-black/20 border-2 border-white/10 rounded-2xl p-3 text-center font-mono text-sm uppercase focus:border-white/30 outline-none">
+                        <button id="joinBtn" onclick="joinRoom()" class="px-6 bg-white/10 hover:bg-white/20 rounded-2xl font-bold btn-bounce disabled:opacity-50">JOIN</button>
+                    </div>
+                </div>
+                <p id="status" class="text-xs font-mono text-white/40 h-4">Connecting to server...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <div id="app" class="hidden fixed inset-0 flex flex-col">
+        <!-- Header (UI Element) -->
+        <div id="appHeader" class="absolute top-0 left-0 w-full p-4 z-40 pointer-events-none ui-element transition-opacity duration-500">
+            <div class="glass max-w-4xl mx-auto h-16 rounded-full flex items-center justify-between px-6 pointer-events-auto shadow-2xl">
+                <div class="flex items-center gap-4">
+                    <span class="font-black text-xl tracking-tight hidden sm:inline">Watch<span class="text-blue-400 accent-text">Together</span></span>
+                    <button onclick="copyID()" class="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-full text-xs font-bold border border-white/10 transition-all">
+                        <span id="displayID">ID: ...</span> <i class="fas fa-copy ml-1"></i>
+                    </button>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="shareScreen()" class="w-10 h-10 rounded-full bg-white/5 hover:bg-white/20 flex items-center justify-center transition-all" title="Share Screen"><i class="fas fa-desktop"></i></button>
+                    <button onclick="leave()" class="bg-red-500/80 hover:bg-red-500 text-white px-5 py-2 rounded-full text-xs font-black shadow-lg">EXIT</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Stage -->
+        <div class="flex-1 flex w-full h-full relative">
+            <!-- Video Area (Full Screen) -->
+            <div class="flex-1 bg-black relative overflow-hidden group">
+                
+                <!-- YouTube Overlay Input (Hover Zone Fixed) -->
+                <!-- Use a Trigger Zone at the top (h-32) so controls only appear when intentionally hovering near top -->
+                <div id="ytControls" class="absolute top-0 left-0 w-full h-32 z-30 flex justify-center items-end pb-4 transition-all duration-300 opacity-0 hover:opacity-100 focus-within:opacity-100 ui-element">
+                    <div class="glass p-2 rounded-full flex gap-2 shadow-2xl scale-95 hover:scale-100 transition-transform w-96 max-w-[90%]">
+                        <input id="ytUrl" type="text" placeholder="Paste YouTube Link..." class="flex-1 bg-transparent border-none text-sm font-bold px-4 outline-none text-white">
+                        <button onclick="loadYT()" class="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-500 flex items-center justify-center shadow-lg accent-bg"><i class="fas fa-play text-xs"></i></button>
+                    </div>
+                </div>
+
+                <!-- Players -->
+                <div id="ytPlayer" class="w-full h-full pointer-events-auto"></div>
+                <video id="screenVideo" class="hidden w-full h-full object-contain bg-black" autoplay playsinline></video>
+                
+                <!-- Placeholder -->
+                <div id="placeholder" class="absolute inset-0 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm z-10 pointer-events-none ui-element">
+                    <div class="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-4 border-2 border-white/10 animate-pulse">
+                        <i class="fas fa-film text-4xl text-white/20"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-white/50">Waiting for video...</h2>
+                </div>
+
+                <!-- WebRTC Overlay (Draggable & Auto-Hiding) -->
+                <div id="camGrid" class="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3 p-2 z-50 max-w-full overflow-x-auto no-scrollbar pointer-events-auto glass rounded-2xl shadow-2xl cursor-grab active:cursor-grabbing">
+                    <!-- Me -->
+                    <div class="relative w-32 aspect-video bg-gray-900 rounded-xl overflow-hidden shadow-2xl border border-white/20 ring-1 ring-black/50 hover:scale-105 transition-transform">
+                        <video id="myVideo" class="w-full h-full object-cover transform -scale-x-100" autoplay muted playsinline></video>
+                        <div class="absolute bottom-1 left-1 text-[8px] font-black bg-blue-600 px-1.5 py-0.5 rounded text-white accent-bg">YOU</div>
+                        <div class="absolute top-1 right-1 flex gap-1">
+                            <button onclick="toggleAudio()" id="btnAudio" class="w-5 h-5 rounded bg-black/50 hover:bg-white text-white hover:text-black flex items-center justify-center text-[10px] transition-colors"><i class="fas fa-microphone"></i></button>
+                            <button onclick="toggleVideo()" id="btnVideo" class="w-5 h-5 rounded bg-black/50 hover:bg-white text-white hover:text-black flex items-center justify-center text-[10px] transition-colors"><i class="fas fa-video"></i></button>
+                        </div>
+                    </div>
+                    <!-- Peers injected here -->
+                </div>
+            </div>
+
+            <!-- Chat (UI Element) -->
+            <div id="chatBoxContainer" class="absolute right-4 bottom-24 w-80 h-96 glass rounded-3xl flex flex-col hidden md:flex border border-white/10 shadow-2xl z-40 transition-opacity duration-500 ui-element">
+                <div class="p-4 border-b border-white/5 flex justify-between items-center">
+                    <span class="font-bold text-xs tracking-wider text-white/70">LIVE CHAT</span>
+                    <span id="userCount" class="bg-green-500/20 text-green-400 text-[10px] px-2 py-1 rounded-full font-bold">1 Online</span>
+                </div>
+                <div id="chatBox" class="flex-1 overflow-y-auto p-4 space-y-3 no-scrollbar"></div>
+                <form onsubmit="sendMsg(event)" class="p-3 border-t border-white/5 relative">
+                    <input id="chatIn" type="text" class="w-full bg-black/40 border border-white/10 rounded-full pl-4 pr-10 py-2.5 text-xs font-bold text-white focus:border-white/30 outline-none" placeholder="Say something...">
+                    <button type="submit" class="absolute right-4 top-1/2 -translate-y-1/2 text-blue-400 hover:text-blue-300 accent-text"><i class="fas fa-paper-plane"></i></button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGIC -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getFirestore, collection, doc, setDoc, onSnapshot, updateDoc, addDoc, serverTimestamp, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+
+        // ==========================================
+        // 🚨 CONFIG (Use yours from before)
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyDGgBZL5GkdDG9Hhb66HGNRTUfOjtt2xR0",
+            authDomain: "watchparty-57597.firebaseapp.com",
+            projectId: "watchparty-57597",
+            storageBucket: "watchparty-57597.firebasestorage.app",
+            messagingSenderId: "214088005820",
+            appId: "1:214088005820:web:8515c329f52afaab7a78b9"
+        };
+        // ==========================================
+
+        let app, db, auth, user, room;
+        let mode = 'friends', myStream, screenStream;
+        let peers = {};
+        let ytPlayer, ytReady = false, amISyncing = false, playState = 'paused';
+        const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+        // --- INIT ---
+        async function boot() {
+            if (!firebaseConfig.apiKey) return document.getElementById('configErr').classList.remove('hidden');
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                const cred = await signInAnonymously(auth);
+                user = cred.user;
+                document.getElementById('status').innerText = "Connected & Ready";
+                document.getElementById('status').classList.add('text-green-400');
+            } catch(e) {
+                alert("Firebase Error: " + e.message);
+            }
+        }
+
+        // --- DRAGGABLE WEBCAMS ---
+        const grid = document.getElementById('camGrid');
+        let isDragging = false, startX, startY, initialLeft, initialTop;
+
+        grid.addEventListener('mousedown', (e) => {
+            if(e.target.tagName === 'BUTTON' || e.target.tagName === 'I') return;
+            isDragging = true;
+            startX = e.clientX; startY = e.clientY;
+            const rect = grid.getBoundingClientRect();
+            // Convert to absolute positioning if centered via CSS
+            if (window.getComputedStyle(grid).transform !== 'none') {
+                grid.style.left = rect.left + 'px';
+                grid.style.top = rect.top + 'px';
+                grid.style.bottom = 'auto'; 
+                grid.style.transform = 'none';
+            }
+            initialLeft = grid.offsetLeft; initialTop = grid.offsetTop;
+            grid.style.cursor = 'grabbing';
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            grid.style.left = `${initialLeft + dx}px`;
+            grid.style.top = `${initialTop + dy}px`;
+        });
+
+        window.addEventListener('mouseup', () => { isDragging = false; grid.style.cursor = 'grab'; });
+
+        // --- AUTO HIDE (CINEMA MODE) ---
+        let idleTimer;
+        function resetIdleTimer() {
+            document.body.classList.remove('cinema-mode');
+            clearTimeout(idleTimer);
+            if (playState === 'playing') {
+                idleTimer = setTimeout(() => {
+                    document.body.classList.add('cinema-mode');
+                }, 3000); // 3 seconds idle
+            }
+        }
+        window.addEventListener('mousemove', resetIdleTimer);
+        window.addEventListener('click', resetIdleTimer);
+        window.addEventListener('keydown', resetIdleTimer);
+
+        // --- GATE ANIMATION GENERATOR ---
+        function generatePixelArt(color) {
+            // 15x15 Grid for half-heart (simplified)
+            let pixels = [];
+            for(let i=0; i<300; i++) { // Random scattering for demo, but better to use fixed pattern
+                // Just creating a solid block for the gate look
+                pixels.push(`<div class="pixel" style="background:${color}; top:${Math.random()*200}px; left:${Math.random()*150}px"></div>`);
+            }
+            // Better: Return solid color blocks for cleaner "Gate" look as requested
+            // Using inline SVG in JS for the specific pixel shapes
+            return `<div style="width:100%; height:100%; background:${color}; box-shadow: inset 0 0 50px rgba(0,0,0,0.5);"></div>`;
+        }
+
+        function createPixelHeartParts() {
+            // True Pixel Art Heart (16x14 grid typically)
+            // Left Half
+            const color = mode === 'love' ? '#ec4899' : '#60a5fa'; // Pink or Blue
+            
+            // We construct grid based divs
+            const s = 10; // pixel size
+            let leftHTML = '', rightHTML = '';
+            
+            const heartMap = [
+                "0011000",
+                "0111100",
+                "1111110",
+                "1111111",
+                "1111111",
+                "0111111",
+                "0011111",
+                "0001111",
+                "0000111",
+                "0000011"
+            ];
+
+            heartMap.forEach((row, r) => {
+                // Left side
+                for(let c=0; c<7; c++) {
+                    if(row[c] === '1') leftHTML += `<div style="position:absolute; width:${s}px; height:${s}px; background:${color}; top:${r*s}px; left:${c*s}px; box-shadow: 2px 2px 0 rgba(0,0,0,0.2);"></div>`;
+                }
+                // Right side (Mirror)
+                for(let c=0; c<7; c++) {
+                    if(row[6-c] === '1') rightHTML += `<div style="position:absolute; width:${s}px; height:${s}px; background:${color}; top:${r*s}px; left:${c*s}px; box-shadow: 2px 2px 0 rgba(0,0,0,0.2);"></div>`;
+                }
+            });
+
+            // Center adjustments
+            document.getElementById('gateIconLeft').innerHTML = `<div style="position:relative; width:70px; height:100px; transform: scale(4); transform-origin: top right;">${leftHTML}</div>`;
+            document.getElementById('gateIconRight').innerHTML = `<div style="position:relative; width:70px; height:100px; transform: scale(4); transform-origin: top left;">${rightHTML}</div>`;
+        }
+
+        // --- LOBBY & JOIN ---
+        window.setMode = (m) => {
+            mode = m;
+            document.getElementById('btn-friends').classList.toggle('border-blue-500', m==='friends');
+            document.getElementById('btn-love').classList.toggle('border-pink-500', m==='love');
+            document.body.classList.toggle('theme-love', m==='love');
+        }
+
+        window.createRoom = async () => {
+            if(!user) return alert("Waiting for connection...");
+            const id = Math.random().toString(36).substring(2,8).toUpperCase();
+            try {
+                await setDoc(doc(db, "rooms", id), {
+                    created: serverTimestamp(),
+                    mode: mode,
+                    host: user.uid,
+                    state: { url: '', status: 'paused', time: 0, sharer: null }
+                });
+                join(id);
+            } catch(e) { alert("Check Firestore Rules: " + e.message); }
+        }
+
+        window.joinRoom = async () => {
+            const id = document.getElementById('roomInput').value.trim().toUpperCase().replace("ID:","").trim();
+            if(!id) return alert("Enter ID");
+            const snap = await getDoc(doc(db, "rooms", id));
+            if(!snap.exists()) return alert("Room not found");
+            const rData = snap.data();
+            if(rData.mode === 'love') {
+                mode = 'love';
+                document.body.classList.add('theme-love');
+            } else {
+                mode = 'friends';
+                document.body.classList.remove('theme-love');
+            }
+            join(id);
+        }
+
+        async function join(id) {
+            // 1. Setup Gate
+            createPixelHeartParts();
+            const overlay = document.getElementById('gateOverlay');
+            const leftI = document.getElementById('gateIconLeft');
+            const rightI = document.getElementById('gateIconRight');
+            
+            // 2. Close Gate (Instant -> Visible)
+            overlay.classList.add('active');
+            
+            // 3. Shake Phase
+            await new Promise(r => setTimeout(r, 800)); // Wait for gate close
+            leftI.classList.add('shake-it');
+            rightI.classList.add('shake-it');
+            
+            // 4. Open Gate & Switch UI
+            await new Promise(r => setTimeout(r, 600)); // Wait for shake
+            
+            room = id;
+            document.getElementById('lobby').classList.add('hidden');
+            document.getElementById('app').classList.remove('hidden');
+            document.getElementById('displayID').innerText = `ID: ${id}`;
+            
+            overlay.classList.add('opening');
+            
+            // 5. Cleanup Animation
+            setTimeout(() => {
+                overlay.classList.remove('active', 'opening');
+                leftI.classList.remove('shake-it');
+                rightI.classList.remove('shake-it');
+                // Start Particles if Love mode
+                if(mode === 'love') setInterval(spawnHeart, 1500);
+            }, 1500);
+
+            // Connect Media
+            try {
+                myStream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
+                document.getElementById('myVideo').srcObject = myStream;
+            } catch(e) { console.warn("No Camera"); }
+
+            // DB Join
+            const nick = document.getElementById('username').value || "Guest";
+            await setDoc(doc(db, "rooms", room, "users", user.uid), { name: nick, active: true });
+            window.onbeforeunload = () => deleteDoc(doc(db, "rooms", room, "users", user.uid));
+            listen();
+        }
+
+        // --- CORE SYNC ---
+        function listen() {
+            onSnapshot(collection(db, "rooms", room, "users"), snap => {
+                document.getElementById('userCount').innerText = `${snap.size} Online`;
+                snap.docChanges().forEach(c => {
+                    if(c.doc.id !== user.uid && c.type === 'added' && !peers[c.doc.id]) connect(c.doc.id, true);
+                });
+            });
+
+            onSnapshot(collection(db, "rooms", room, "signals"), snap => {
+                snap.docChanges().forEach(c => {
+                    if(c.type === 'added' && c.doc.data().target === user.uid) handleSignal(c.doc.data(), c.doc.ref);
+                });
+            });
+
+            onSnapshot(collection(db, "rooms", room, "messages"), snap => {
+                const box = document.getElementById('chatBox');
+                box.innerHTML = '';
+                const msgs = [];
+                snap.forEach(d => msgs.push(d.data()));
+                msgs.sort((a,b) => a.ts - b.ts);
+                msgs.forEach(m => {
+                    const me = m.uid === user.uid;
+                    box.innerHTML += `<div class="flex flex-col ${me?'items-end':'items-start'}"><span class="text-[10px] text-white/50 px-2">${m.name}</span><div class="${me?'bg-blue-600':'bg-white/10'} px-3 py-1.5 rounded-2xl text-xs max-w-[85%] accent-bg">${m.txt}</div></div>`;
+                });
+                box.scrollTop = 9999;
+            });
+
+            onSnapshot(doc(db, "rooms", room), snap => {
+                if(!snap.exists()) return;
+                syncState(snap.data().state);
+            });
+        }
+
+        function syncState(s) {
+            const scr = document.getElementById('screenVideo');
+            const yt = document.getElementById('ytPlayer');
+            
+            if(s.sharer) {
+                yt.classList.add('hidden-important');
+                scr.classList.remove('hidden');
+                if(s.sharer !== user.uid) {
+                    const el = document.getElementById(`v-${s.sharer}`);
+                    if(el) scr.srcObject = el.srcObject;
+                }
+                playState = 'playing'; // Treat screen share as playing
+            } else {
+                scr.classList.add('hidden');
+                yt.classList.remove('hidden-important');
+                
+                if(ytReady && s.url) {
+                    document.getElementById('placeholder').classList.add('hidden-important');
+                    if(ytPlayer.getVideoData()['video_id'] !== s.url) ytPlayer.loadVideoById(s.url);
+                    
+                    const diff = Math.abs(ytPlayer.getCurrentTime() - s.time);
+                    playState = s.status;
+                    
+                    if(s.status === 'playing') {
+                        if(ytPlayer.getPlayerState() !== 1) ytPlayer.playVideo();
+                        if(diff > 2) ytPlayer.seekTo(s.time, true);
+                    } else {
+                        if(ytPlayer.getPlayerState() !== 2) ytPlayer.pauseVideo();
+                    }
+                }
+            }
+            resetIdleTimer(); // Update UI state based on play status
+        }
+
+        // --- WEBRTC ---
+        function connect(uid, init) {
+            if(!init && user.uid > uid) return; 
+            const pc = new RTCPeerConnection(rtcConfig);
+            pc.q = []; peers[uid] = pc;
+            if(myStream) myStream.getTracks().forEach(t => pc.addTrack(t, myStream));
+            
+            pc.ontrack = e => {
+                let v = document.getElementById(`v-${uid}`);
+                if(!v) {
+                    const d = document.createElement('div');
+                    d.className = "relative w-32 aspect-video bg-gray-900 rounded-xl overflow-hidden shadow-lg border border-white/20 ring-1 ring-black/50";
+                    v = document.createElement('video');
+                    v.id = `v-${uid}`; v.className = "w-full h-full object-cover";
+                    v.autoplay = true; v.playsInline = true;
+                    d.appendChild(v); grid.appendChild(d);
+                }
+                v.srcObject = e.streams[0];
+            };
+            
+            pc.onicecandidate = e => { if(e.candidate) sendSig({type:'ice', val:e.candidate.toJSON(), target:uid}); };
+            
+            if(init) {
+                pc.createOffer().then(o => pc.setLocalDescription(o)).then(() => {
+                    sendSig({type:'offer', val:{type:pc.localDescription.type, sdp:pc.localDescription.sdp}, target:uid});
+                });
+            }
+        }
+
+        async function handleSignal(sig, ref) {
+            const pc = peers[sig.sender] || (connect(sig.sender, false), peers[sig.sender]);
+            try {
+                if(sig.type === 'offer') {
+                    await pc.setRemoteDescription(new RTCSessionDescription(sig.val));
+                    const a = await pc.createAnswer();
+                    await pc.setLocalDescription(a);
+                    sendSig({type:'answer', val:{type:a.type, sdp:a.sdp}, target:sig.sender});
+                } else if(sig.type === 'answer') {
+                    await pc.setRemoteDescription(new RTCSessionDescription(sig.val));
+                } else if(sig.type === 'ice') {
+                    await pc.addIceCandidate(new RTCIceCandidate(sig.val));
+                }
+            } catch(e){}
+            deleteDoc(ref);
+        }
+        
+        async function sendSig(pl) { pl.sender=user.uid; await addDoc(collection(db, "rooms", room, "signals"), pl); }
+
+        // --- HELPERS ---
+        window.loadYT = async () => {
+            const m = document.getElementById('ytUrl').value.match(/(?:v=|\/)([\w-]{11})/);
+            if(m) updateDoc(doc(db, "rooms", room), {'state.url': m[1], 'state.status': 'playing'});
+        }
+        window.sendMsg = async (e) => {
+            e.preventDefault();
+            const i = document.getElementById('chatIn');
+            if(i.value) addDoc(collection(db, "rooms", room, "messages"), {txt:i.value, uid:user.uid, name:document.getElementById('username').value, ts:serverTimestamp()});
+            i.value = '';
+        }
+        window.copyID = () => {
+            const t = document.createElement("textarea"); t.value = room; document.body.appendChild(t); t.select(); 
+            try { document.execCommand('copy'); } catch(e){} 
+            document.body.removeChild(t);
+            const el = document.getElementById('displayID'); el.innerText="COPIED!"; setTimeout(()=>el.innerText=`ID: ${room}`, 1500);
+        }
+        window.leave = () => location.reload();
+        window.toggleAudio = () => { if(myStream) myStream.getAudioTracks()[0].enabled = !myStream.getAudioTracks()[0].enabled; };
+        window.toggleVideo = () => { if(myStream) myStream.getVideoTracks()[0].enabled = !myStream.getVideoTracks()[0].enabled; };
+        
+        window.shareScreen = async () => {
+            try {
+                screenStream = await navigator.mediaDevices.getDisplayMedia({video:true});
+                updateDoc(doc(db, "rooms", room), {'state.sharer':user.uid});
+                const track = screenStream.getVideoTracks()[0];
+                Object.values(peers).forEach(pc => {
+                    const sender = pc.getSenders().find(s => s.track.kind === 'video');
+                    if(sender) sender.replaceTrack(track);
+                });
+                track.onended = () => {
+                    updateDoc(doc(db, "rooms", room), {'state.sharer':null});
+                    const cam = myStream.getVideoTracks()[0];
+                    Object.values(peers).forEach(pc => pc.getSenders().find(s => s.track.kind === 'video').replaceTrack(cam));
+                };
+            } catch(e){}
+        }
+
+        function spawnHeart() {
+            const h = document.createElement('div'); h.innerHTML='<i class="fas fa-heart"></i>'; h.className='heart-particle';
+            h.style.left=Math.random()*100+'vw'; h.style.fontSize=(Math.random()*20+10)+'px';
+            document.body.appendChild(h); setTimeout(()=>h.remove(), 3000);
+        }
+
+        // Youtube
+        const tag = document.createElement('script'); tag.src = "https://www.youtube.com/iframe_api"; document.body.appendChild(tag);
+        window.onYouTubeIframeAPIReady = () => {
+            ytPlayer = new YT.Player('ytPlayer', { height:'100%', width:'100%', playerVars:{'autoplay':0,'controls':1,'rel':0}, events:{
+                'onReady': ()=>ytReady=true,
+                'onStateChange': (e) => {
+                    if(!amISyncing && (e.data===1 || e.data===2)) {
+                        updateDoc(doc(db, "rooms", room), {'state.status':e.data===1?'playing':'paused', 'state.time':ytPlayer.getCurrentTime()});
+                    }
+                }
+            }});
+        };
+
+        boot();
+    </script>
+</body>
+</html>
